@@ -1,7 +1,11 @@
-class Strategy7bit:
+from content_transfer_encoding_strategies.abstract_strategy import AbstractStrategy
+
+
+class Strategy7bit(AbstractStrategy):
     CLASS_NAME = "Strategy7bit"
 
-    def __init__(self, config, logger, utils):
+    def __init__(self, config, logger, utils, services):
+        self.services = services
         self.logger = logger
         self.utils = utils
         self.config = config
@@ -10,16 +14,19 @@ class Strategy7bit:
         self.logger.log("Unencoded 7-bit ASCII | Content-Type: " + str(content_type), Strategy7bit.CLASS_NAME)
 
         if self.config["print_payload"]:
-            print("**RAW PAYLOAD**")
-            print(payload)
+            print(f"***** RAW PAYLOAD {Strategy7bit.CLASS_NAME} *****")
+            print(payload + "\n")
 
         if self.config["payload_analysis"]:
-            print("**PAYLOAD ANALYSIS**")
-            res = []
+            print(f"***** PAYLOAD ANALYSIS {Strategy7bit.CLASS_NAME} *****")
             body = ''.join(payload)
             print(body)
             if "text/plain" in content_type:
-                self.utils.find_urls(body)
+                res_print, res_domains = self.utils.find_urls("text/plain", body)
             elif "text/html" in content_type:
-                return self.utils.find_urls_html(body)
-            return res
+                res_print, res_domains = self.utils.find_urls("html", body)
+            if res_domains:
+                matches = []
+                for d in res_domains:
+                    matches = matches + self.services["feed_service"].process_domain(d)
+            print("***** END ANALYSIS *****")

@@ -1,10 +1,13 @@
 import quopri
 
+from content_transfer_encoding_strategies.abstract_strategy import AbstractStrategy
 
-class StrategyQuotedPrintable:
+
+class StrategyQuotedPrintable(AbstractStrategy):
     CLASS_NAME = "StrategyQuotedPrintable"
 
-    def __init__(self, config, logger, utils):
+    def __init__(self, config, logger, utils, services):
+        self.services = services
         self.logger = logger
         self.utils = utils
         self.config = config
@@ -17,11 +20,16 @@ class StrategyQuotedPrintable:
         body = ''.join(payload)
         decoded = quopri.decodestring(body).decode("utf-8")
         if self.config["print_payload"]:
-            print("**RAW PAYLOAD**")
-            print(decoded)
+            print(f"***** RAW PAYLOAD {StrategyQuotedPrintable.CLASS_NAME} *****")
+            print(decoded + "\n")
 
         if self.config["payload_analysis"]:
-            print("**PAYLOAD ANALYSIS**")
+            print(f"***** PAYLOAD ANALYSIS {StrategyQuotedPrintable.CLASS_NAME} *****")
             if self.config["debug"]: self.logger.log(body)
-            self.utils.find_urls(decoded)
+            res_print, res_domains = self.utils.find_urls("decoded_quopri", payload)
+            if res_domains:
+                matches = []
+                for d in res_domains:
+                    matches = matches + self.services["feed_service"].process_domain(d)
             # TODO
+            print("***** END ANALYSIS *****")

@@ -23,6 +23,8 @@ optional arguments:
   -c, --color           Some output sections are printed using terminal colors (default: False)
   -x, --user-interface  Display Headers in a window (default: False)
 ```
+Be sure to create a config.yml based on the included config_sample.yml
+Be also sure to fill the feeds.py file with the sources of the IoC/feeds
 
 <h3>Notes</h3>
 Quick and dirty email forensic tool. Probably it won't have unit tests, unless parse operation becomes difficult: only trying to parse many mails (and time) will tell.
@@ -44,4 +46,5 @@ Opening mail with this tool should be safe enough, EML files are read and interp
 <li>UI (improve)</li>
 <li>X-Headers analysis</li>
 <li>dig txt record to better investigate sender DNS</li>
+<li>some analysis on spf, dkim, dmarc</li>
 </ul>

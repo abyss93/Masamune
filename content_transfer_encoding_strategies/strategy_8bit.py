@@ -1,7 +1,11 @@
-class Strategy8bit:
+from content_transfer_encoding_strategies.abstract_strategy import AbstractStrategy
+
+
+class Strategy8bit(AbstractStrategy):
     CLASS_NAME = "Strategy8bit"
 
-    def __init__(self, config, logger, utils):
+    def __init__(self, config, logger, utils, services):
+        self.services = services
         self.logger = logger
         self.utils = utils
         self.config = config
@@ -11,10 +15,11 @@ class Strategy8bit:
         self.logger.log("Unencoded 8-bit ASCII | Content-Type: " + str(content_type), Strategy8bit.CLASS_NAME)
 
         if self.config["print_payload"]:
-            print("**RAW PAYLOAD**")
-            print(payload)
+            print(f"***** RAW PAYLOAD {Strategy8bit.CLASS_NAME} *****")
+            print(payload + "\n")
 
         if self.config["payload_analysis"]:
-            print("**PAYLOAD ANALYSIS**")
+            print(f"***** PAYLOAD ANALYSIS {Strategy8bit.CLASS_NAME} *****")
             # TODO
             print("8bit")
+            print("***** END ANALYSIS *****")

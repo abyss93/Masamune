@@ -65,21 +65,6 @@ class TerminalView:
             color = random.choice(list(self.STYLES.keys()))
             self.internal_printc(color, f"{k}: {v}")
 
-    def print_parsed_payloads(self, payloads):
-        for i, p in enumerate(payloads):
-            color = random.choice(list(self.STYLES.keys()))
-            self.internal_printc(color, "__PAYLOAD__" + str(i))
-            print(p)
-            self.internal_printc(color, "__END_PAY__" + str(i))
-
-    def print_text_plain(self, whole_content):
-        print("____TEXT_PLAIN____")
-        whole_content_lines = whole_content.splitlines(True)
-        text_plain_index = whole_content_lines.index("\n") + 1  # end of headers section, plus 1 to exclude the \n line
-        text_plain = "".join(whole_content_lines[text_plain_index:])
-        print(text_plain)
-        print("__END_TEXT_PLAIN__")
-
     def internal_printc(self, color, text, end="newline"):
         if self.print_color:
             if end == "":

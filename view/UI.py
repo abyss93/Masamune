@@ -1,13 +1,11 @@
-from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QMainWindow, QHeaderView, QSizePolicy
-
+from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QMainWindow
 
 
 class UI:
 
     def render(self, headers):
-        x = headers.values()
+        x = headers
         rows = 0
         for i, v in enumerate(x):
             rows += len(v)
@@ -25,17 +23,15 @@ class UI:
         table_widget.setColumnCount(2)
         table_widget.setMinimumSize(500, 500)
         table_widget.setRowCount(rows)
-        horizontal_header = table_widget.horizontalHeader()
         vertical_header = table_widget.verticalHeader()
         
         vertical_header.setVisible(False)
 
         r = 0
-        for horizontal_header, values in headers.items():
-            table_widget.setItem(r, 0, QTableWidgetItem(horizontal_header))
-            for value in values:
-                table_widget.setItem(r, 1, QTableWidgetItem(value))
-                r += 1
+        for h in headers:
+            table_widget.setItem(r, 0, QTableWidgetItem(h[0]))
+            table_widget.setItem(r, 1, QTableWidgetItem(h[1]))
+            r += 1
 
         table_widget.resizeColumnsToContents()
         table_widget.resizeRowsToContents()

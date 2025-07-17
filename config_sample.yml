@@ -1,0 +1,11 @@
+# put API keys in the list below
+api_keys:
+  alienvault_otx: 
+  abuseipdb: 
+# abs path of the location of feeds, be sure to create this path and that the user running orc has right privileges on it
+feed_folder_path: "/home/user/orc/feed_files/"
+# email addresses that should not be analyzed (safe, not disclosed...) nor sent to external feeds
+# I don't want to potentially disclose personal email addresses to third party services
+email_address_whitelist: ["foobar@foobar.com"]
+# domains considered safe
+domains_whitelist: ["foobar.com"]
