@@ -36,6 +36,9 @@ I'm not a Python expert, and this is also another reason why I started this work
 <h3>Security</h3>
 Opening mail with this tool should be safe enough, EML files are read and interpreted as text files, so nothing will be executed and nothing malicious should be triggered unless Python itself contains vulnerable code in the file read method (very unlikely, but nothing is impossible).
 
+<h3>Feeds</h3>
+More feed can be added, one very good feed is for example https://phishing.army/
+
 <h3>Next...</h3>
 <ul>
 <li>Integration with other tools (phishtank, talos, etc)</li>
