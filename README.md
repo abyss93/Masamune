@@ -7,7 +7,7 @@ Given an email, the tool creates an HTML report with insights and security info 
 <h3>Usage</h3>
 
 ```
-usage: masamune.py [-h] [-H] [-p] [-a] [-d] [-c] [-x] email_path
+usage: masamune.py [-h] [-H] [-p] [-a] [-d] [-c] email_path
 
  -- Masamune -- Email Forensic and Analysis Tool --
 
