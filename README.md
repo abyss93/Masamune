@@ -34,8 +34,10 @@ Opening mail with this tool should be safe enough as EML files are read and inte
 
 <h3>Feeds</h3>
 
-More feed can be added, one very good feed is for example https://phishing.army/, that is provided as an example, along with urlhaus.abuse.ch.
-I want to thank the maintainers of those feeds.
+Feeds are the datasources that provide insight on the email attachments/URLs/IPs/Domains...
+You can add more feeds by creating a dedicated class under check_services and eventually adding a row in the config.yaml file or in the feeds.py file, depending on the type of feed.
+If feed needs to call and external API -> edit config.yaml
+If feed needs to download a file -> edit feeds.py
 
 <h3>Credits</h3>
 
