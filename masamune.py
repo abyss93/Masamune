@@ -173,7 +173,7 @@ if __name__ == "__main__":
            "\033[32m /_/  /_/\_,_/___/\_,_/_/_/_/\_,_/_//_/\__/   \033[0m\n"
 
     print(LOGO)
-    parser = argparse.ArgumentParser(description="\03[32m -- Masamune -- Email Forensic Tool --\033[0m\n",
+    parser = argparse.ArgumentParser(description="\033[32m -- Masamune -- Email Forensic Tool --\033[0m\n",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("email_path", type=str, help="Path of the email to analyze (EML format)")
     parser.add_argument("-H", "--print-headers", help="Print email headers in a friendly way",
