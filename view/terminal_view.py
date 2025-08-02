@@ -1,4 +1,7 @@
+# Author: Abyss93
+
 import random
+
 
 class TerminalView:
     STYLES = {

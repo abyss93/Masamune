@@ -1,49 +1,53 @@
+# Author: Abyss93
+
 import hashlib
 import re
-from urllib.parse import urlparse
 
 
 class Utils:
+    CLASS_NAME = "Utils"
+
     def __init__(self, logger):
         self.logger = logger
 
     @staticmethod
     def hashes_of(obj):
-        print("***** HASHES *****")
-        # md5 = hashlib.md5(obj).hexdigest()
-        # sha1 = hashlib.sha1(obj).hexdigest()
+        md5 = hashlib.md5(obj).hexdigest()
+        sha1 = hashlib.sha1(obj).hexdigest()
         sha256 = hashlib.sha256(obj).hexdigest()
-        print(f"sha256sum: {sha256}")
-        print(f"\t\_ PIVOT TO VT: https://www.virustotal.com/gui/search/{sha256}")
-        print("***** END_HASHES *****")
+        # print(f"sha256sum: {sha256}")
+        # print(f"\t\_ PIVOT TO VT: https://www.virustotal.com/gui/search/{sha256}")
+        return [md5, sha1, sha256]
 
     @staticmethod
-    def find_urls(string_type, string_to_check):
-        res_print = []
-        res_domains = []
-        if string_type == "html":
-            urls = re.findall("(?<=href=\")(.*?)(?=\")", string_to_check)
+    def find_urls_and_domains(payload_type, payload):
+        domains = []
+        urls_res = []
+        if payload_type == "html":
+            urls = re.findall("(?<=href=\")(.*?)(?=\")", payload)
         else:
             urls = re.findall(
-                r"((http:\/\/|https:\/\/|ftp:\/\/|www.)\.?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
-                string_to_check)
+                r"(http:\/\/|https:\/\/|ftp:\/\/|www.\.?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,256}\b[-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
+                payload)
 
+        filter_out = {"http://", "https://", "ftp://"}
+        urls = [u for u in urls if u not in filter_out]
         if urls is not None and len(urls) > 0:
-            for url in urls:
-                res_print.append(url[0].replace(".", "[.]").replace(":", "[:]"))
-                res_domains.append(Utils.extract_domain_from_(url[0]))
+            for u in urls:
+                urls_res.append(u.replace(".", "[.]").replace(":", "[:]"))
+                domains.append(Utils.extract_domain_from_(u))
 
-        res_print = list(dict.fromkeys(res_print))
-        res_domains = list(dict.fromkeys(res_domains))
-        print("***** START URLs *****")
-        for r in res_print:
-            print(r)
-        print("***** END URLs *****")
-        print("***** DOMAINs *****")
-        for r in res_domains:
-            print(r.replace(".", "[.]"))
-        print("***** END DOMAINs *****")
-        return res_print, res_domains
+        urls_res = list(dict.fromkeys(urls_res))
+        domains = list(dict.fromkeys(domains))
+        # print("***** START URLs *****")
+        # for r in urls_res:
+        #    print(r)
+        # print("***** END URLs *****")
+        # print("***** DOMAINs *****")
+        # for r in domains:
+        #    print(r.replace(".", "[.]"))
+        # print("***** END DOMAINs *****")
+        return urls_res, domains
 
     @staticmethod
     def look_for_email_addresses(text):
@@ -60,11 +64,36 @@ class Utils:
     @staticmethod
     def look_for_ip_address(header_name, header_value):
         pattern = "(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
-        if "Received" in header_name:
+        if "Received" == header_name:
             # in Received headers, IPs are usually enclosed in square parentheses so I adapt the regex to avoid matching numbers that are not IP addresses
             pattern = "(?!\[)" + pattern + "(?=\])"
         return re.findall(pattern, header_value)
 
     @staticmethod
     def extract_domain_from_(url):
-        return urlparse(url).netloc.replace("www.", "")
+        # Thanks to https://medium.com/@glee8804/extracting-domains-from-urls-in-python-fa2bf0d01ac3
+        # Define a regular expression pattern for extracting the domain
+        pattern = r"(https?://)?(www\d?\.)?(?P<domain>[\w\.-]+\.\w+)(/\S*)?"
+        # Use re.match to search for the pattern at the beginning of the URL
+        match = re.match(pattern, url)
+        # Check if a match is found
+        if match:
+            # Extract the domain from the named group "domain"
+            domain = match.group("domain")
+            return domain
+        else:
+            return ""
+
+    # given an FQDN like abcd.efg.xyz.hi it returns
+    # ["abcd.efg.xyz.hi", "xyz.hi"]
+    # that is a list composed by [FQDN, SLD_dot_TLD]
+    # these two are sufficient to have a meaningful check
+    @staticmethod
+    def get_fqdn_and_sld_from(domain: str):
+        # domain = an FQDN
+        res = [domain]
+        arr = domain.split(".")
+        if len(arr) > 2:
+            sld_tld = arr[-2] + "." + arr[-1]
+            res.append(sld_tld)
+        return res

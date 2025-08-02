@@ -1,23 +1,28 @@
 #!/usr/bin/python3
 
+# Author: Abyss93
+
 import argparse
+import datetime
 import email
 
-from check_services.dumb_service import DumbService
-from check_services.feeds_service import FeedsService
-from content_transfer_encoding_strategies.strategy_7bit import Strategy7bit
-from content_transfer_encoding_strategies.strategy_8bit import Strategy8bit
-from content_transfer_encoding_strategies.strategy_base64 import StrategyBase64
-from content_transfer_encoding_strategies.strategy_binary import StrategyBinary
-from content_transfer_encoding_strategies.strategy_fallback import StrategyFallback
-from content_transfer_encoding_strategies.strategy_quoted_printable import StrategyQuotedPrintable
-from check_services.alienvault_otx_service import AlienVaultOTXService
 from check_services.abuseipdb_service import AbuseipDBService
+from check_services.alienvault_otx_service import AlienVaultOTXService
+from check_services.dumb_service import DummyService
+from check_services.feeds_service import FeedService
 from header_analysis.header_analyzer import HeaderAnalyzer
+from header_analysis.header_analyzer_result import HeaderAnalyzerResult
+from payload_analysis.payload_analysis_result import PayloadAnalysisResult
+from payload_analysis.strategy_7bit import Strategy7bit
+from payload_analysis.strategy_8bit import Strategy8bit
+from payload_analysis.strategy_base64 import StrategyBase64
+from payload_analysis.strategy_binary import StrategyBinary
+from payload_analysis.strategy_fallback import StrategyFallback
+from payload_analysis.strategy_quoted_printable import StrategyQuotedPrintable
+from utils.config_parser import ConfigParser
 from utils.logger import Logger
 from utils.utils import Utils
-from utils.config_parser import ConfigParser
-from view.UI import UI
+from view.HTML_report import HTMLReport
 from view.terminal_view import TerminalView
 
 
@@ -34,17 +39,27 @@ def check_for_duplicate_content_type_header(p_headers):
     return result
 
 
-def process_payloads(email_msg, utils, logger, payload_strategies, view, nest_level=-1):
+def process_payloads(email_msg, logger, payload_strategies, results_node, nest_level=-1):
     nest_level += 1
     if isinstance(email_msg.get_payload(), str):
+        payload_analysis_result = PayloadAnalysisResult()
+        payload_analysis_result.nest_level = nest_level
+        payload_analysis_result.tree_id = f"{str(nest_level)}"
         payload_headers = email_msg.items()
         content_type_h = check_for_duplicate_content_type_header(payload_headers)
         payload_headers = dict(payload_headers)
         payload_headers["Content-Type"] = content_type_h
-        payload_strategies["fallback"].process(payload_headers["Content-Type"], email_msg.get_payload())
+        strategy_result = payload_strategies["fallback"].process(payload_headers["Content-Type"],
+                                                                 email_msg.get_payload())
+        payload_analysis_result.strategies_results.append(strategy_result)
+        results_node.children.append(payload_analysis_result)
     else:
         for i, p in enumerate(email_msg.get_payload()):
-            print("***** START_PAYLOAD_" + str(nest_level) + "_" + str(i) + " *****")
+            payload_analysis_result = PayloadAnalysisResult()
+            payload_analysis_result.nest_level = nest_level
+            payload_analysis_result.tree_id = f"{str(nest_level)}_{str(i)}"
+            results_node.children.append(payload_analysis_result)
+            logger.log("***** START_PAYLOAD_" + str(nest_level) + "_" + str(i) + " *****")
             # https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
             # <<Each part starts with an encapsulation boundary, and then contains a body part consisting of header area, a blank line, and a body area>>
             payload_headers = p.items()
@@ -54,28 +69,33 @@ def process_payloads(email_msg, utils, logger, payload_strategies, view, nest_le
             content_type_h = check_for_duplicate_content_type_header(payload_headers)
             payload_headers = dict(payload_headers)
             payload_headers["Content-Type"] = content_type_h
-            view.print_headers(payload_headers.items())
+            payload_analysis_result.payload_headers = payload_headers.items()
+            logger.log(payload_analysis_result.payload_headers)
 
             if "Content-Transfer-Encoding" in payload_headers:
                 try:
-                    payload_strategies[payload_headers["Content-Transfer-Encoding"]].process(payload_headers["Content-Type"],
-                                                                                       p.get_payload())
+                    strategy_result = payload_strategies[payload_headers["Content-Transfer-Encoding"]].process(
+                        payload_headers["Content-Type"],
+                        p.get_payload())
                 except KeyError:
                     # There are only five valid values for the Content-Transfer-Encoding header: "7bit", "8bit", "base64", 
                     # "quoted-printable" and "binary". The email is broken on purpose by the sender
-                    print(
+                    logger.log(
                         f"Error: Strategy not defined for -> Content-Transfer-Encoding: \"{payload_headers['Content-Transfer-Encoding']}\"."
                         f" EMAIL IS PROBABLY BROKEN ON PURPOSE BY THE SENDER."
                         f" DOING FALLBACK ON A GENERIC-ANALYSIS STRATEGY")
-                    payload_strategies["fallback"].process(payload_headers["Content-Type"], p.as_string())
+                    strategy_result = payload_strategies["fallback"].process(payload_headers["Content-Type"],
+                                                                             p.as_string())
+                payload_analysis_result.strategies_results.append(strategy_result)
             if "Content-Type" not in payload_headers:
                 # https://www.rfc-editor.org/rfc/rfc2045#section-5.2 defaults to: Content-type: text/plain; charset=us-ascii
-                payload_strategies["fallback"].process(payload_headers["Content-Type"], p.as_string())
+                strategy_result = payload_strategies["fallback"].process(payload_headers["Content-Type"], p.as_string())
+                payload_analysis_result.strategies_results.append(strategy_result)
             elif payload_headers["Content-Type"] is not None and "boundary" in payload_headers["Content-Type"]:
                 # nested payload, another boundary is present and a recursive call is needed for the next nest_level
-                process_payloads(p, utils, logger, payload_strategies, view, nest_level)
-
-            print("***** END_PAYLOAD_" + str(nest_level) + "_" + str(i) + " *****")
+                process_payloads(p, logger, payload_strategies, payload_analysis_result, nest_level)
+            logger.log("***** END_PAYLOAD_" + str(nest_level) + "_" + str(i) + " *****")
+    return results_node
 
 
 def execute(email_path, config_args):
@@ -94,20 +114,20 @@ def execute(email_path, config_args):
     utils = Utils(logger)
     # initialize check services
     services = {}
-    feed_service = FeedsService(logger, feed_folder_path)
+    feed_service = FeedService(logger, feed_folder_path)
     feed_service.update()  # create feeds or update outdated ones
     services["feed_service"] = feed_service
     if api_keys["alienvault_otx"]:
         services["alienvault_otx"] = AlienVaultOTXService(logger, api_keys["alienvault_otx"])
     else:
-        services["alienvault_otx"] = DumbService(logger, "AlienVault")
+        services["alienvault_otx"] = DummyService(logger, "AlienVault")
     if api_keys["abuseipdb"]:
         services["abuseipdb"] = AbuseipDBService(logger, api_keys["abuseipdb"])
     else:
-        services["abuseipdb"] = DumbService(logger, "AbuseIPDB")
+        services["abuseipdb"] = DummyService(logger, "AbuseIPDB")
     # prepare views
     view = TerminalView(config_args["color"])
-    # preparing strategies to analyze the various types of email payloads by RFC types + a genaral fallback 
+    # preparing strategies to analyze the various types of email payloads by RFC types + a general fallback 
     payload_strategies = {
         "base64": StrategyBase64(config_args, logger, utils, services),
         "quoted-printable": StrategyQuotedPrintable(config_args, logger, utils, services),
@@ -120,6 +140,8 @@ def execute(email_path, config_args):
 
     # email processing
     headers = email_msg.items()
+    headers_results = HeaderAnalyzerResult()
+    payload_results = PayloadAnalysisResult()
     if config_args["print_headers"]:
         print(
             "######################################################## HEADERS ########################################################")
@@ -127,32 +149,31 @@ def execute(email_path, config_args):
         print(
             "#########################################################################################################################")
     if config_args["header_analysis"]:
-        print(
-            "\n################################################## ANALYSIS HEADERS #####################################################")
-        header_analyzer.analyze(headers)
-        print(
-            "#########################################################################################################################")
+        print("DOING: HEADER ANALYSIS")
+        headers_results = header_analyzer.analyze(headers)
+        print("DONE")
     if config_args["payload_analysis"]:
-        print(
-            "\n######################################################## PAYLOADS #######################################################")
-        process_payloads(email_msg, utils, logger, payload_strategies, view)
-        print(
-            "#########################################################################################################################")
+        print("DOING: PAYLOAD ANALYSIS")
+        payload_results = PayloadAnalysisResult()
+        payload_results.tree_id = "ROOT PLACEHOLDER"
+        process_payloads(email_msg, logger, payload_strategies, payload_results)
+        print("DONE")
 
-    # user-interface only if requested by the user
-    if config_args["user_interface"]:
-        ui = UI()
-        ui.render(headers)
+    html = HTMLReport(logger)
+    report = html.generate_report_html(email_path, headers, headers_results, payload_results)
+    report_name = email_path.split("/")[-1] + f"_{datetime.datetime.now()}"
+    with open(config_file["report_save_directory"] + report_name, "w") as f:
+        f.write(report)
 
 
 if __name__ == "__main__":
-    LOGO = "\033[35m           ▄▄▄   ▄▄·\033[0m\n" \
-           "\033[35m     ▪     ▀▄ █·▐█ ▌▪\033[0m\n" \
-           "\033[35m      ▄█▀▄ ▐▀▀▄ ██ ▄▄\033[0m\n" \
-           "\033[35m     ▐█▌.▐▌▐█•█▌▐███▌\033[0m\n" \
-           "\033[35m      ▀█▄▀▪.▀  ▀·▀▀▀\033[0m\n" 
+    LOGO = "\033[32m    __  ___                                   \033[0m\n" \
+           "\033[32m   /  |/  /__ ____ ___ ___ _  __ _____  ___   \033[0m\n" \
+           "\033[32m  / /|_/ / _ `(_-</ _ `/  ' \/ // / _ \/ -_)  \033[0m\n" \
+           "\033[32m /_/  /_/\_,_/___/\_,_/_/_/_/\_,_/_//_/\__/   \033[0m\n"
+
     print(LOGO)
-    parser = argparse.ArgumentParser(description="\033[35m -- ORC -- Email Forensic Tool --\033[0m\n",
+    parser = argparse.ArgumentParser(description="\03[32m -- Masamune -- Email Forensic Tool --\033[0m\n",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("email_path", type=str, help="Path of the email to analyze (EML format)")
     parser.add_argument("-H", "--print-headers", help="Print email headers in a friendly way",
@@ -166,7 +187,6 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", help="Debug info to stdout", action="store_true")
     parser.add_argument("-c", "--color", help="Some output sections are printed using terminal colors",
                         action="store_true")
-    parser.add_argument("-x", "--user-interface", help="Display Headers in a window", action="store_true")
     args = parser.parse_args()
     config_args = vars(args)
 

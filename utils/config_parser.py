@@ -1,8 +1,11 @@
+# Author: Abyss93
+
 import yaml
 
 
 class ConfigParser:
     CLASS_NAME = "ConfigParser"
+
     def __init__(self, logger):
         self.logger = logger
 
