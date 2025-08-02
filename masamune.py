@@ -8,7 +8,7 @@ import email
 
 from check_services.abuseipdb_service import AbuseipDBService
 from check_services.alienvault_otx_service import AlienVaultOTXService
-from check_services.dumb_service import DummyService
+from check_services.dummy_service import DummyService
 from check_services.feeds_service import FeedService
 from header_analysis.header_analyzer import HeaderAnalyzer
 from header_analysis.header_analyzer_result import HeaderAnalyzerResult
