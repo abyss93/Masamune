@@ -183,7 +183,8 @@ ul, #payloadTreeView {
         # <payload_analysis> #
         self.__add("<hr>")
         self.__add(f"""
-                    <h2>Payload Analysis</h2>         
+                    <h2>Payload Analysis</h2>
+                    <span title="On the Payload Tree of an email\nAn email can be composed of various payloads/attachments. Every payload can be composed by other nested payloads. A level of 0_2 means that this payload is not nested in any other payload (it's a level-0 payload), and it is the third (count starts at 0) payload at the uppermost level of the email. A level of 1_2 means that this payload is nested in a level-0 payload (its -father-) and it is the third -child-."><i>[?]</i></span>         
 """)
 
         # traversing tree payload analysis
@@ -246,7 +247,7 @@ ul, #payloadTreeView {
 
     def treeview_from(self, tree: PayloadAnalysisResult):
         if len(tree.children) > 0:
-            r = (f"<li><span class=\"caret\" id=\"{tree.tree_id}\">{tree.tree_id}"
+            r = (f"<li><span class=\"caret\" id=\"{tree.tree_id}\">Level: {tree.tree_id}"
                  f"<div class=\"p_headers\">"
                  f"Headers<br>{self.table_from_dict_items(tree.payload_headers)}"
                  f"</div>"
@@ -258,7 +259,7 @@ ul, #payloadTreeView {
                 r = r + self.treeview_from(t)
                 r = r + "</ul>"
         else:
-            r = (f"<li>{tree.tree_id}"
+            r = (f"<li>Level: {tree.tree_id}"
                  f"<div class=\"p_headers\">"
                  f"Headers<br>{self.table_from_dict_items(tree.payload_headers)}"
                  f"</div>"
@@ -278,13 +279,13 @@ ul, #payloadTreeView {
         return r
     
     def html_for_list_dict_hashes_pivot_to_virustotal(self, ls):
-        r = "<table>"
+        r = "<table style=\"border:1px solid black;\">"
         for elem in ls:
             for hash_type, hash_value in elem.items():
                 r = r + "<tr>"
-                r = r + f"<td>{str(hash_type).upper()}: {hash_value}</td>"
+                r = r + f"<td>{str(hash_type).upper()}:</td> <td style=\"text-align:right;\">{hash_value}</td>"
                 r = r + "</tr>"
-            r = r + f"<tr><td><a href=\"https://www.virustotal.com/gui/search/{elem['sha256']}\" target=\"blank\">Pivot to VirusTotal</a></td></tr>"
+            r = r + f"<tr><td><img src=\"https://www.virustotal.com/gui/images/favicon.svg\"> <a href=\"https://www.virustotal.com/gui/search/{elem['sha256']}\" target=\"blank\">Pivot to VirusTotal</a></td></tr>"
         r = r + "</table>"
         return r
 
