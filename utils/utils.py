@@ -100,9 +100,10 @@ class Utils:
 
     @staticmethod
     def get_charset_from_content_type_header(content_type):
-        pattern = r"charset=(?P<charset>[^ ]*)"
-        matches = re.findall(pattern, content_type)
-        if len(matches) == 1:
+        # https://www.w3.org/Protocols/rfc1341/7_1_Text.html
+        pattern = "charset=(ISO-8859-[0-9]{1,2}|utf-8|US-ASCII){1}"
+        matches = re.findall(pattern, content_type, re.IGNORECASE)
+        if matches:
             return matches[0]
         else:
             return None
