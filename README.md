@@ -71,3 +71,8 @@ I want to thank the authors of these resources.
 <li>dig txt record to better investigate sender DNS</li>
 <li>some analysis on spf, dkim, dmarc</li>
 </ul>
+
+<h3>Tests</h3>
+Unit test should be added and maybe will sometime in the future.<br>
+In the meantime, if you would like to test the tool you can use your own emails if you want, or you can use the examples located here https://github.com/mikel/mail/tree/master/spec/fixtures/emails.
+There are many test files used by the developers of the linked Ruby library.
