@@ -80,6 +80,10 @@ def process_payloads(email_msg, logger, payload_strategies, results_node, nest_l
                 except KeyError:
                     # There are only five valid values for the Content-Transfer-Encoding header: "7bit", "8bit", "base64", 
                     # "quoted-printable" and "binary". The email is broken on purpose by the sender
+                    # TODO, to be honest: I should change the code to ignore the case of the key:
+                    # https://www.rfc-editor.org/rfc/rfc1341.html#page-10
+                    # <<[...] These values are not case sensitive.  That  is,  Base64  and BASE64  and  bAsE64 are all equivalent. [...]>>
+                    # even if it is very unlikely to receive this header with strange case.
                     logger.log(
                         f"Error: Strategy not defined for -> Content-Transfer-Encoding: \"{payload_headers['Content-Transfer-Encoding']}\"."
                         f" EMAIL IS PROBABLY BROKEN ON PURPOSE BY THE SENDER."

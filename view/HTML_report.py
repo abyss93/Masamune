@@ -13,6 +13,8 @@ class HTMLReport:
     def __add(self, s):
         self.report = self.report + s
 
+    # TODO I should add the possibility to print the raw payload in the HTML report
+    # using the already present command line option
     def generate_report_html(self, email_path, headers, headers_results, payload_results):
         self.__add("""<!DOCTYPE html>
 <html lang="en">
@@ -126,7 +128,7 @@ ul, #payloadTreeView {
             self.__add(f"""
         <tr>
             <td>{h}</td>
-            <td>{v}</td>
+            <td>{str(v).replace("<", "&lt;").replace(">", "&gt;")}</td>
         </tr>            
 """)
         self.__add("</table>")

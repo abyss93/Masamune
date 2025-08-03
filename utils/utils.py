@@ -97,3 +97,12 @@ class Utils:
             sld_tld = arr[-2] + "." + arr[-1]
             res.append(sld_tld)
         return res
+
+    @staticmethod
+    def get_charset_from_content_type_header(content_type):
+        pattern = r"charset=(?P<charset>[^ ]*)"
+        matches = re.findall(pattern, content_type)
+        if len(matches) == 1:
+            return matches[0]
+        else:
+            return None

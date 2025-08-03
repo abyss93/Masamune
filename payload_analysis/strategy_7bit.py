@@ -20,7 +20,6 @@ class Strategy7bit(AbstractStrategy):
         if self.config["payload_analysis"]:
             self.logger.log(f"***** PAYLOAD ANALYSIS {Strategy7bit.CLASS_NAME} *****")
             body = ''.join(payload)
-            # print(body)
             urls, domains = [], []
             if "text/plain" in content_type:
                 urls, domains = self.utils.find_urls_and_domains("text/plain", body)
