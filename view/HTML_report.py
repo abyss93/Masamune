@@ -276,6 +276,17 @@ ul, #payloadTreeView {
             r = r + "</tr>"
         r = r + "</table>"
         return r
+    
+    def html_for_list_dict_hashes_pivot_to_virustotal(self, ls):
+        r = "<table>"
+        for elem in ls:
+            for hash_type, hash_value in elem.items():
+                r = r + "<tr>"
+                r = r + f"<td>{str(hash_type).upper()}: {hash_value}</td>"
+                r = r + "</tr>"
+            r = r + f"<tr><td><a href=\"https://www.virustotal.com/gui/search/{elem['sha256']}\" target=\"blank\">Pivot to VirusTotal</a></td></tr>"
+        r = r + "</table>"
+        return r
 
     def html_for_strategy_result(self, srl: list[StrategyResult]):
         html = ""
@@ -295,7 +306,7 @@ ul, #payloadTreeView {
                     <td style="border-right: 3px solid black">Domain Matches</td><td>{domain_feed_matches}</td>
                     </tr>
                     <tr>
-                    <td style="border-right: 3px solid black">Hashes</td><td>{self.html_for_lists(sr.hashes)}</td>
+                    <td style="border-right: 3px solid black">Hashes</td><td>{self.html_for_list_dict_hashes_pivot_to_virustotal(sr.hashes)}</td>
                     </tr>
                     </table>
                 """

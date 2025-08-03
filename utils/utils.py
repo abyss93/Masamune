@@ -15,9 +15,7 @@ class Utils:
         md5 = hashlib.md5(obj).hexdigest()
         sha1 = hashlib.sha1(obj).hexdigest()
         sha256 = hashlib.sha256(obj).hexdigest()
-        # print(f"sha256sum: {sha256}")
-        # print(f"\t\_ PIVOT TO VT: https://www.virustotal.com/gui/search/{sha256}")
-        return [md5, sha1, sha256]
+        return {"md5": md5, "sha1": sha1, "sha256": sha256}
 
     @staticmethod
     def find_urls_and_domains(payload_type, payload):

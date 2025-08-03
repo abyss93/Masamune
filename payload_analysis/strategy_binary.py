@@ -23,6 +23,6 @@ class StrategyBinary(AbstractStrategy):
             self.logger.log(f"***** PAYLOAD ANALYSIS {StrategyBinary.CLASS_NAME} *****", StrategyBinary.CLASS_NAME)
             # TODO
             hashes = self.utils.hashes_of(payload)
-            result.hashes = hashes
+            result.hashes.append(hashes)
             self.logger.log("***** END ANALYSIS *****", StrategyBinary.CLASS_NAME)
         return result

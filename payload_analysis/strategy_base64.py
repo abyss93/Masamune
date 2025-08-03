@@ -26,7 +26,7 @@ class StrategyBase64(AbstractStrategy):
             self.logger.log(f"***** PAYLOAD ANALYSIS {StrategyBase64.CLASS_NAME} *****", StrategyBase64.CLASS_NAME)
             self.logger.log(body, StrategyBase64.CLASS_NAME)
             hashes = self.utils.hashes_of(decoded)
-            result.hashes = hashes
+            result.hashes.append(hashes)
             # print(decoded)
             # if self.config["find_urls"]: self.utils.find_urls(decoded)
             # TODO
