@@ -2,6 +2,11 @@
 
 from payload_analysis.payload_analysis_result import PayloadAnalysisResult
 from payload_analysis.strategy_result import StrategyResult
+import html
+
+
+def escape(s):
+    return html.escape(s, True)
 
 
 class HTMLReport:
@@ -101,7 +106,7 @@ ul, #payloadTreeView {
         self.__add("<td style=\"width:60%;\">")
         self.__add(f"""
             <div style="text-align:center;">
-            <h2 class="main_title"><b>Email Report: {email_path}</b></h1>
+            <h2 class="main_title"><b>Email Report: {escape(email_path)}</b></h1>
             </div>         
         """)
         self.__add("</td>")
@@ -127,8 +132,8 @@ ul, #payloadTreeView {
         for h, v in headers:
             self.__add(f"""
         <tr>
-            <td>{h}</td>
-            <td>{str(v).replace("<", "&lt;").replace(">", "&gt;")}</td>
+            <td>{escape(h)}</td>
+            <td>{escape(v)}</td>
         </tr>            
 """)
         self.__add("</table>")
@@ -150,8 +155,8 @@ ul, #payloadTreeView {
         for ip_r in headers_results.ip_results:
             self.__add(f"""
             <tr>
-                <td>{ip_r["IP"]}</td>
-                <td>{ip_r["service_name"]}</td>
+                <td>{escape(ip_r["IP"])}</td>
+                <td>{escape(ip_r["service_name"])}</td>
                 <td>{self.table_from_dict(ip_r["processing_result"])}</td>
             </tr>
             """)
@@ -169,8 +174,8 @@ ul, #payloadTreeView {
         for domain_r in headers_results.domain_results:
             self.__add(f"""
                         <tr>
-                            <td>{domain_r["domain"]}</td>
-                            <td>{domain_r["service_name"]}</td>
+                            <td>{escape(domain_r["domain"])}</td>
+                            <td>{escape(domain_r["service_name"])}</td>
                             <td>{self.table_from_dict(domain_r["processing_result"])}</td>
                         </tr>
                         """)
@@ -224,14 +229,19 @@ ul, #payloadTreeView {
         r = f"<table>"
         if table_style != "":
             r = f"<table style=\"{table_style}\">"
-        for k, v in dict_data.items():
-            r = r + "<tr>"
-            r = r + f"<td>{k}</td>"
-            if isinstance(v, dict):
-                r = r + f"<td>{self.table_from_dict(v)}</td>"
-            else:
-                r = r + f"<td>{v}</td>"
-            r = r + "</tr>"
+        if len(dict_data.items()) > 0:
+            for k, v in dict_data.items():
+                r = r + "<tr>"
+                r = r + f"<td>{escape(k)}</td>"
+                if isinstance(v, dict):
+                    r = r + f"<td>{self.table_from_dict(v)}</td>"
+                elif isinstance(v, list):
+                    r = r + f"<td>{self.html_for_lists(v)}</td>"
+                else:
+                    r = r + f"<td>{escape(v)}</td>"
+                r = r + "</tr>"
+        else:
+            r = r + "<tr><td>EMPTY</td></tr>"
         r = r + "</table>"
         return r
 
@@ -239,15 +249,15 @@ ul, #payloadTreeView {
         r = "<table>"
         for k, v in dict_items:
             r = r + "<tr>"
-            r = r + f"<td>{k}</td>"
-            r = r + f"<td>{v}</td>"
+            r = r + f"<td>{escape(k)}</td>"
+            r = r + f"<td>{escape(v)}</td>"
             r = r + "</tr>"
         r = r + "</table>"
         return r
 
     def treeview_from(self, tree: PayloadAnalysisResult):
         if len(tree.children) > 0:
-            r = (f"<li><span class=\"caret\" id=\"{tree.tree_id}\">Level: {tree.tree_id}"
+            r = (f"<li><span class=\"caret\" id=\"{escape(tree.tree_id)}\">Level: {escape(tree.tree_id)}"
                  f"<div class=\"p_headers\">"
                  f"Headers<br>{self.table_from_dict_items(tree.payload_headers)}"
                  f"</div>"
@@ -259,7 +269,7 @@ ul, #payloadTreeView {
                 r = r + self.treeview_from(t)
                 r = r + "</ul>"
         else:
-            r = (f"<li>Level: {tree.tree_id}"
+            r = (f"<li>Level: {escape(tree.tree_id)}"
                  f"<div class=\"p_headers\">"
                  f"Headers<br>{self.table_from_dict_items(tree.payload_headers)}"
                  f"</div>"
@@ -271,10 +281,13 @@ ul, #payloadTreeView {
 
     def html_for_lists(self, ls):
         r = "<table>"
-        for elem in ls:
-            r = r + "<tr>"
-            r = r + f"<td>{elem}</td>"
-            r = r + "</tr>"
+        if len(ls) > 0:
+            for elem in ls:
+                r = r + "<tr>"
+                r = r + f"<td>{escape(elem)}</td>"
+                r = r + "</tr>"
+        else:
+            r = r + "<tr><td>EMPTY</td></tr>"
         r = r + "</table>"
         return r
     
@@ -283,20 +296,23 @@ ul, #payloadTreeView {
         for elem in ls:
             for hash_type, hash_value in elem.items():
                 r = r + "<tr>"
-                r = r + f"<td>{str(hash_type).upper()}:</td> <td style=\"text-align:right;\">{hash_value}</td>"
+                r = r + f"<td>{escape(str(hash_type).upper())}:</td> <td style=\"text-align:right;\">{escape(hash_value)}</td>"
                 r = r + "</tr>"
-            r = r + f"<tr><td><img src=\"https://www.virustotal.com/gui/images/favicon.svg\"> <a href=\"https://www.virustotal.com/gui/search/{elem['sha256']}\" target=\"blank\">Pivot to VirusTotal</a></td></tr>"
+            r = r + f"<tr><td><img src=\"https://www.virustotal.com/gui/images/favicon.svg\"> <a href=\"https://www.virustotal.com/gui/search/{escape(elem['sha256'])}\" target=\"blank\">Pivot to VirusTotal</a></td></tr>"
         r = r + "</table>"
         return r
 
     def html_for_strategy_result(self, srl: list[StrategyResult]):
-        html = ""
+        r = ""
         for sr in srl:
             domain_feed_matches = ""
-            for dfm in sr.domain_feed_matches:
-                domain_feed_matches = domain_feed_matches + self.table_from_dict(dfm,
-                                                                                 "border-top: 3px solid black; border-bottom: 3px solid black; margin-bottom: 3px;")
-            html = html + f"""<table>
+            if len(sr.domain_feed_matches) > 0:
+                for dfm in sr.domain_feed_matches:
+                    domain_feed_matches = domain_feed_matches + self.table_from_dict(dfm,
+                                                                                     "border-top: 3px solid black; border-bottom: 3px solid black; margin-bottom: 3px;")
+            else:
+                domain_feed_matches = self.html_for_lists(sr.domain_feed_matches)
+            r = r + f"""<table>
                     <tr>
                     <td style="border-right: 3px solid black">URL</td><td>{self.html_for_lists(sr.urls)}</td>
                     </tr>
@@ -311,7 +327,7 @@ ul, #payloadTreeView {
                     </tr>
                     </table>
                 """
-        return html
+        return r
 
 
 if __name__ == "__main__":

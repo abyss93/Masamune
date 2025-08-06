@@ -48,6 +48,7 @@ def process_payloads(email_msg, logger, payload_strategies, results_node, nest_l
         payload_headers = email_msg.items()
         content_type_h = check_for_duplicate_content_type_header(payload_headers)
         payload_headers = dict(payload_headers)
+        payload_analysis_result.payload_headers = payload_headers.items()
         payload_headers["Content-Type"] = content_type_h
         strategy_result = payload_strategies["fallback"].process(payload_headers["Content-Type"],
                                                                  email_msg.get_payload())
@@ -165,7 +166,7 @@ def execute(email_path, config_args):
 
     html = HTMLReport(logger)
     report = html.generate_report_html(email_path, headers, headers_results, payload_results)
-    report_name = email_path.split("/")[-1] + f"_{datetime.datetime.now()}"
+    report_name = email_path.split("/")[-1] + f"_{datetime.datetime.now()}.html"
     with open(config_file["report_save_directory"] + report_name, "w") as f:
         f.write(report)
 

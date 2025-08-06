@@ -6,7 +6,7 @@ class StrategyResult:
         self.urls = []
         self.domains = []
         self.payload_to_print = ""
-        self.domain_feed_matches = []
+        self.domain_feed_matches: list[dict] = []
         self.hashes: list[dict] = []
 
     def __str__(self):
